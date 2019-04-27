@@ -213,10 +213,8 @@
 //#define RAND_SEED_IN        A4
 //#define RAND_SEED_IN_PORT   PORTF
 //#define RAND_SEED_IN_BIT    PORTF1
-//
-//#define RAND_SEED_IN_ADMUX (_BV(REFS0) | _BV(REFS1) | _BV(MUX0))
 
-#define RAND_SEED_IN_ADMUX 0
+#define RAND_SEED_IN_ADMUX (_BV(REFS0) | _BV(REFS1) | _BV(MUX2))
 
 #define SPI_MISO_PORT *portOutputRegister(PIN_SPI_MISO)
 #define SPI_MISO_BIT  digitalPinToBit(PIN_SPI_MISO)

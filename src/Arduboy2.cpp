@@ -299,6 +299,10 @@ int Arduboy2Base::cpuLoad()
 
 unsigned long Arduboy2Base::generateRandomSeed()
 {
+#ifdef MIDIBOY
+  RIGHT_BUTTON_PORT &= ~(1 << RIGHT_BUTTON_BIT); // Disable pull up on right button pin.
+#endif
+
   unsigned long seed;
 
   power_adc_enable(); // ADC on
@@ -310,6 +314,10 @@ unsigned long Arduboy2Base::generateRandomSeed()
   seed = ((unsigned long)ADC << 16) + micros();
 
   power_adc_disable(); // ADC off
+
+#ifdef MIDIBOY
+  RIGHT_BUTTON_PORT |= (1 << RIGHT_BUTTON_BIT); // Re-enable pull up.
+#endif
 
   return seed;
 }
