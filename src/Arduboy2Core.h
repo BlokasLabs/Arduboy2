@@ -253,6 +253,10 @@
 #define COLUMN_ADDRESS_END (WIDTH - 1) & 127   // 128 pixels wide
 #define PAGE_ADDRESS_END ((HEIGHT/8)-1) & 7    // 8 pages high
 
+#ifdef MIDIBOY
+#include "MidiboyDefs.h"
+#endif
+
 /** \brief
  * Eliminate the USB stack to free up code space.
  *

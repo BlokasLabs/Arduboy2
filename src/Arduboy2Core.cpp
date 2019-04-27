@@ -6,6 +6,7 @@
 
 #include "Arduboy2Core.h"
 
+#ifndef MIDIBOY
 const uint8_t PROGMEM lcdBootProgram[] = {
   // boot defaults are commented out but left here in case they
   // might prove useful for reference
@@ -69,7 +70,12 @@ const uint8_t PROGMEM lcdBootProgram[] = {
   // set page address range
   // 0x22, 0x00, PAGE_ADDRESS_END
 };
-
+#else
+// SH1106
+static const uint8_t PROGMEM lcdBootProgram[] = {
+  0xae, 0x40, 0xa1, 0xc8, 0x81, 0xff, 0x02, 0x10, 0xb0, 0xaf
+};
+#endif
 
 Arduboy2Core::Arduboy2Core() { }
 
@@ -189,7 +195,19 @@ void Arduboy2Core::bootPins()
   DDRF &= ~(_BV(A_BUTTON_BIT) | _BV(B_BUTTON_BIT) | _BV(RAND_SEED_IN_BIT));
   // Port F outputs (none)
   // Speaker: Not set here. Controlled by audio class
+#elif defined (MIDIBOY)
+  pinMode(PIN_BTN_A, INPUT_PULLUP);
+  pinMode(PIN_BTN_B, INPUT_PULLUP);
+  pinMode(PIN_BTN_UP, INPUT_PULLUP);
+  pinMode(PIN_BTN_DOWN, INPUT_PULLUP);
+  pinMode(PIN_BTN_LEFT, INPUT_PULLUP);
+  pinMode(PIN_BTN_RIGHT, INPUT_PULLUP);
 
+  pinMode(PIN_LCD_RESET, OUTPUT);
+  pinMode(PIN_LCD_DC, OUTPUT);
+  pinMode(PIN_SPI_SS, OUTPUT);
+  pinMode(PIN_SPI_SCK, OUTPUT);
+  pinMode(PIN_SPI_MOSI, OUTPUT);
 #endif
 }
 
@@ -246,6 +264,7 @@ void Arduboy2Core::SPItransfer(uint8_t data)
 
 void Arduboy2Core::safeMode()
 {
+#ifndef MIDIBOY
   if (buttonsState() == UP_BUTTON)
   {
     digitalWriteRGB(RED_LED, RGB_ON);
@@ -258,6 +277,7 @@ void Arduboy2Core::safeMode()
 
     while (true) { }
   }
+#endif
 }
 
 
@@ -272,11 +292,13 @@ void Arduboy2Core::idle()
 
 void Arduboy2Core::bootPowerSaving()
 {
+#ifndef MIDIBOY
   // disable Two Wire Interface (I2C) and the ADC
   // All other bits will be written with 0 so will be enabled
   PRR0 = _BV(PRTWI) | _BV(PRADC);
   // disable USART1
   PRR1 |= _BV(PRUSART1);
+#endif
 }
 
 // Shut down the display
@@ -305,15 +327,47 @@ uint8_t Arduboy2Core::height() { return HEIGHT; }
 
 void Arduboy2Core::paint8Pixels(uint8_t pixels)
 {
+#ifdef MIDIBOY
+  static uint8_t x, y;
+
+  if (x == 0)
+  {
+    LCDCommandMode();
+    SPItransfer(0x02);
+    SPItransfer(0x10);
+    SPItransfer(0xb0 | y);
+    LCDDataMode();
+    y = (y + 1) & (HEIGHT / 8 - 1);
+  }
+  x = (x + 1) & (WIDTH - 1);
+#endif
+
   SPItransfer(pixels);
 }
 
 void Arduboy2Core::paintScreen(const uint8_t *image)
 {
+#ifndef MIDIBOY
   for (int i = 0; i < (HEIGHT*WIDTH)/8; i++)
   {
     SPItransfer(pgm_read_byte(image + i));
   }
+#else
+  // Reset position.
+  for (int j=0; j<8; ++j)
+  {
+    // Set the page and column addresses.
+    LCDCommandMode();
+    SPItransfer(0x02);
+    SPItransfer(0x10);
+    SPItransfer(0xb0 | j);
+    LCDDataMode();
+    for (int i=0; i<WIDTH; ++i)
+    {
+      SPItransfer(pgm_read_byte(image + (j * WIDTH) + i));
+    }
+  }
+#endif
 }
 
 // paint from a memory buffer, this should be FAST as it's likely what
@@ -324,6 +378,7 @@ void Arduboy2Core::paintScreen(const uint8_t *image)
 // It is specifically tuned for a 16MHz CPU clock and SPI clocking at 8MHz.
 void Arduboy2Core::paintScreen(uint8_t image[], bool clear)
 {
+#ifndef MIDIBOY
   uint16_t count;
 
   asm volatile (
@@ -347,6 +402,24 @@ void Arduboy2Core::paintScreen(uint8_t image[], bool clear)
       [len_lsb] "M"   (WIDTH * (HEIGHT / 8 * 2) & 0xFF), // 2: for delay loop multiplier
       [clear]   "r"   (clear)
   );
+#else
+  // Reset position.
+  for (int j=0; j<8; ++j)
+  {
+    // Set the page and column addresses.
+    LCDCommandMode();
+    SPItransfer(0x02);
+    SPItransfer(0x10);
+    SPItransfer(0xb0 | j);
+    LCDDataMode();
+    for (int i=0; i<WIDTH; ++i)
+    {
+      SPItransfer(*(image + (j * WIDTH) + i));
+    }
+  }
+  if (clear)
+    memset(image, 0, WIDTH*HEIGHT/8);
+#endif
 }
 #if 0
 // For reference, this is the "closed loop" C++ version of paintScreen()
@@ -391,8 +464,25 @@ void Arduboy2Core::paintScreen(uint8_t image[], bool clear)
 
 void Arduboy2Core::blank()
 {
+#ifndef MIDIBOY
   for (int i = 0; i < (HEIGHT*WIDTH)/8; i++)
     SPItransfer(0x00);
+#else
+  // Reset position.
+  for (int j=0; j<8; ++j)
+  {
+    // Set the page and column addresses.
+    LCDCommandMode();
+    SPItransfer(0x02);
+    SPItransfer(0x10);
+    SPItransfer(0xb0 | j);
+    LCDDataMode();
+    for (int i=0; i<WIDTH; ++i)
+    {
+      SPItransfer(0x00);
+    }
+  }
+#endif
 }
 
 void Arduboy2Core::sendLCDCommand(uint8_t command)
@@ -548,6 +638,8 @@ uint8_t Arduboy2Core::buttonsState()
   if (bitRead(A_BUTTON_PORTIN, A_BUTTON_BIT) == 0) { buttons |= A_BUTTON; }
   // B
   if (bitRead(B_BUTTON_PORTIN, B_BUTTON_BIT) == 0) { buttons |= B_BUTTON; }
+#elif defined(MIDIBOY)
+  buttons = (~PINC) & 0x3f;
 #endif
 
   return buttons;
@@ -561,6 +653,7 @@ void Arduboy2Core::delayShort(uint16_t ms)
 
 void Arduboy2Core::exitToBootloader()
 {
+#ifndef MIDIBOY
   cli();
   // set bootloader magic key
   // storing two uint8_t instead of one uint16_t saves an instruction
@@ -572,6 +665,7 @@ void Arduboy2Core::exitToBootloader()
   WDTCSR = (_BV(WDCE) | _BV(WDE));
   WDTCSR = _BV(WDE);
   while (true) { }
+#endif
 }
 
 // Replacement main() that eliminates the USB stack code.
@@ -580,6 +674,7 @@ void Arduboy2Core::exitToBootloader()
 
 void Arduboy2Core::mainNoUSB()
 {
+#ifndef MIDIBOY
   // disable USB
   UDCON = _BV(DETACH);
   UDIEN = 0;
@@ -587,9 +682,11 @@ void Arduboy2Core::mainNoUSB()
   USBCON = _BV(FRZCLK);
   UHWCON = 0;
   power_usb_disable();
+#endif
 
   init();
 
+#ifndef MIDIBOY
   // This would normally be done in the USB code that uses the TX and RX LEDs
   TX_RX_LED_INIT;
   TXLED0;
@@ -606,6 +703,7 @@ void Arduboy2Core::mainNoUSB()
   if (bitRead(DOWN_BUTTON_PORTIN, DOWN_BUTTON_BIT) == 0) {
     exitToBootloader();
   }
+#endif
 
   // The remainder is a copy of the Arduino main() function with the
   // USB code and other unneeded code commented out.

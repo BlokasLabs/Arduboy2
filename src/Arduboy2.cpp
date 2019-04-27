@@ -54,6 +54,7 @@ void Arduboy2Base::begin()
 
 void Arduboy2Base::flashlight()
 {
+#ifndef MIDIBOY
   if (!pressed(UP_BUTTON)) {
     return;
   }
@@ -71,6 +72,7 @@ void Arduboy2Base::flashlight()
   while (true) {
     idle();
   }
+#endif
 }
 
 void Arduboy2Base::systemButtons()
@@ -261,12 +263,14 @@ bool Arduboy2Base::nextFrameDEV()
 {
   bool ret = nextFrame();
 
+#ifndef MIDIBOY
   if (ret) {
     if (lastFrameDurationMs > eachFrameMillis)
       TXLED1;
     else
       TXLED0;
   }
+#endif
   return ret;
 }
 
