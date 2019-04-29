@@ -12,7 +12,7 @@ bool Arduboy2Audio::audio_enabled = false;
 void Arduboy2Audio::on()
 {
   // fire up audio pins by seting them as outputs
-#ifdef ARDUBOY_10
+#if defined (ARDUBOY_10) || defined (MIDIBOY)
   bitSet(SPEAKER_1_DDR, SPEAKER_1_BIT);
   bitSet(SPEAKER_2_DDR, SPEAKER_2_BIT);
 #else
@@ -25,7 +25,7 @@ void Arduboy2Audio::off()
 {
   audio_enabled = false;
   // shut off audio pins by setting them as inputs
-#ifdef ARDUBOY_10
+#if defined (ARDUBOY_10) || defined (MIDIBOY)
   bitClear(SPEAKER_1_DDR, SPEAKER_1_BIT);
   bitClear(SPEAKER_2_DDR, SPEAKER_2_BIT);
 #else

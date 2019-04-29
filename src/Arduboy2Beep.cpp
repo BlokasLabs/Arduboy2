@@ -6,8 +6,9 @@
 
 #include <Arduino.h>
 #include "Arduboy2Beep.h"
+#include "Arduboy2Core.h"
 
-#ifndef AB_DEVKIT
+#ifdef ARDUBOY_10
 
 // Speaker pin 1, Timer 3A, Port C bit 6, Arduino pin 5
 
@@ -85,7 +86,7 @@ void BeepPin2::noTone()
 }
 
 
-#else /* AB_DEVKIT */
+#elif defined (AB_DEVKIT)
 
 // *** The pins used for the speaker on the DevKit cannot be directly
 // controlled by a timer/counter. The following "dummy" functions will
@@ -150,6 +151,80 @@ void BeepPin2::timer()
 void BeepPin2::noTone()
 {
   duration = 0;
+}
+
+#elif defined(MIDIBOY)
+
+uint8_t BeepPin1::duration = 0;
+
+void BeepPin1::begin()
+{
+  TCCR1A = 0;
+  TCCR1B = (bit(WGM12) | bit(CS11)); // CTC mode. Divide by 8 clock prescale;
+}
+
+void BeepPin1::tone(uint16_t count)
+{
+  tone(count, 0);
+}
+
+void BeepPin1::tone(uint16_t count, uint8_t dur)
+{
+  duration = dur;
+  TCCR1A = bit(COM1A0);
+  OCR1A = count;
+}
+
+void BeepPin1::timer()
+{
+  if (duration && (--duration == 0)) {
+    TCCR1A = 0; // set normal mode (which disconnects the pin)
+  }
+}
+
+void BeepPin1::noTone()
+{
+  duration = 0;
+  TCCR1A = 0; // set normal mode (which disconnects the pin)
+}
+
+ISR(TIMER2_COMPA_vect)
+{
+  SPEAKER_1_PORT ^= (1 << SPEAKER_1_BIT);
+}
+
+uint8_t BeepPin2::duration = 0;
+
+void BeepPin2::begin()
+{
+  TCCR2A = 0; // normal mode.
+  TCCR2B = bit(CS22) | bit(CS20); // divide by 128 clock prescale
+}
+
+void BeepPin2::tone(uint16_t count)
+{
+  tone(count, 0);
+}
+
+void BeepPin2::tone(uint16_t count, uint8_t dur)
+{
+  duration = dur;
+  TCCR2A = bit(WGM21);
+  OCR2A = count;
+  TIMSK2 = bit(OCIE2A); // enable interrupt
+}
+
+void BeepPin2::timer()
+{
+  if (duration && (--duration == 0)) {
+    TIMSK2 = 0; // disable interrupt
+  }
+}
+
+void BeepPin2::noTone()
+{
+  duration = 0;
+  TIMSK2 = 0; // disable interrupt
 }
 
 #endif
