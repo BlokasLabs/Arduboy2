@@ -2,7 +2,7 @@
 #define MIDIBOY_DEFS_H
 
 #ifndef ARDUBOY2_CORE_H
-#error Don't include MidiboyDefs.h directly! Include Arduboy2Core.h instead!
+#error "Don't include MidiboyDefs.h directly! Include Arduboy2Core.h instead!"
 #endif
 
 #ifdef MIDIBOY
@@ -123,8 +123,8 @@
 #undef OLED_HORIZ_FLIPPED
 #undef OLED_HORIZ_NORMAL
 
-#undef WIDTH 128
-#undef HEIGHT 64
+#undef WIDTH
+#undef HEIGHT
 
 #undef COLUMN_ADDRESS_END
 #undef PAGE_ADDRESS_END

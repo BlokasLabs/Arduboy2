@@ -541,6 +541,10 @@ void Arduboy2Core::setRGBled(uint8_t red, uint8_t green, uint8_t blue)
   (void)red;    // parameter unused
   (void)green;  // parameter unused
   bitWrite(BLUE_LED_PORT, BLUE_LED_BIT, blue ? RGB_ON : RGB_OFF);
+#elif defined(MIDIBOY)
+  (void)red;
+  (void)green;
+  (void)blue;
 #endif
 }
 
@@ -565,6 +569,9 @@ void Arduboy2Core::setRGBled(uint8_t color, uint8_t val)
   {
     bitWrite(BLUE_LED_PORT, BLUE_LED_BIT, val ? RGB_ON : RGB_OFF);
   }
+#elif defined(MIDIBOY)
+  (void)color;
+  (void)val;
 #endif
 }
 
@@ -588,6 +595,10 @@ void Arduboy2Core::digitalWriteRGB(uint8_t red, uint8_t green, uint8_t blue)
   (void)red;    // parameter unused
   (void)green;  // parameter unused
   bitWrite(BLUE_LED_PORT, BLUE_LED_BIT, blue);
+#elif defined(MIDIBOY)
+  (void)red;
+  (void)green;
+  (void)blue;
 #endif
 }
 
@@ -612,6 +623,9 @@ void Arduboy2Core::digitalWriteRGB(uint8_t color, uint8_t val)
   {
     bitWrite(BLUE_LED_PORT, BLUE_LED_BIT, val);
   }
+#elif defined(MIDIBOY)
+  (void)color;
+  (void)val;
 #endif
 }
 
