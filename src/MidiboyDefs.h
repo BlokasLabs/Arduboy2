@@ -156,12 +156,12 @@
 //#define BLUE_LED_PORT PORTB
 //#define BLUE_LED_BIT PORTB5
 
-#define LEFT_BUTTON  digitalPinToBitMask(PIN_BTN_LEFT)
-#define RIGHT_BUTTON digitalPinToBitMask(PIN_BTN_RIGHT)
-#define UP_BUTTON    digitalPinToBitMask(PIN_BTN_UP)
-#define DOWN_BUTTON  digitalPinToBitMask(PIN_BTN_DOWN)
-#define A_BUTTON     digitalPinToBitMask(PIN_BTN_A)
-#define B_BUTTON     digitalPinToBitMask(PIN_BTN_B)
+#define LEFT_BUTTON  _BV(digitalPinToBit(PIN_BTN_LEFT))
+#define RIGHT_BUTTON _BV(digitalPinToBit(PIN_BTN_RIGHT))
+#define UP_BUTTON    _BV(digitalPinToBit(PIN_BTN_UP))
+#define DOWN_BUTTON  _BV(digitalPinToBit(PIN_BTN_DOWN))
+#define A_BUTTON     _BV(digitalPinToBit(PIN_BTN_A))
+#define B_BUTTON     _BV(digitalPinToBit(PIN_BTN_B))
 
 #define PIN_LEFT_BUTTON     PIN_BTN_LEFT
 #define LEFT_BUTTON_PORT    digitalPinToPORT(PIN_LEFT_BUTTON)
