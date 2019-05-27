@@ -193,7 +193,11 @@ void Arduboy2Base::bootLogoShell(void (*drawLogo)(int16_t))
     digitalWriteRGB(RED_LED, RGB_ON);
   }
 
+#ifndef MIDIBOY
   for (int16_t y = -16; y <= 24; y++) {
+#else
+  for (int16_t y = -16; y <= 16; y++) {
+#endif
     if (pressed(RIGHT_BUTTON)) {
       digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_OFF); // all LEDs off
       return;
@@ -216,6 +220,12 @@ void Arduboy2Base::bootLogoShell(void (*drawLogo)(int16_t))
     digitalWriteRGB(GREEN_LED, RGB_OFF);  // green LED off
     digitalWriteRGB(BLUE_LED, RGB_ON);    // blue LED on
   }
+
+#ifdef MIDIBOY
+  drawBitmap(20, 36, midiboy_edition_text, 88, 8);
+  display(CLEAR_BUFFER);
+#endif
+
   delayShort(400);
   digitalWriteRGB(BLUE_LED, RGB_OFF);
 
